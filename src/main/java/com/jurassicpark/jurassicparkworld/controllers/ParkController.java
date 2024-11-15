@@ -1,8 +1,8 @@
 package com.jurassicpark.jurassicparkworld.controllers;
 
 import com.jurassicpark.jurassicparkworld.models.Park;
-import com.jurassicpark.jurassicparkworld.repositories.ParkRepository;
-import com.jurassicpark.jurassicparkworld.repositories.VisitorRepository;
+import com.jurassicpark.jurassicparkworld.Repositories.ParkRepository;
+import com.jurassicpark.jurassicparkworld.Repositories.VisitorRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;

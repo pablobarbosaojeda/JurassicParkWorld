@@ -1,7 +1,7 @@
 package com.jurassicpark.jurassicparkworld.controllers;
 
 import com.jurassicpark.jurassicparkworld.models.Visitor;
-import com.jurassicpark.jurassicparkworld.repositories.VisitorRepository;
+import com.jurassicpark.jurassicparkworld.Repositories.VisitorRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
