@@ -1,4 +1,4 @@
-/*
+
 package com.jurassicpark.jurassicparkworld.config;
 
 import org.springframework.context.annotation.Bean;
@@ -18,7 +18,8 @@ public class LoginConfig {
     @Bean
     public SecurityFilterChain seguridadAccesos(HttpSecurity http) throws Exception{
         http.authorizeRequests(authorizeRequests ->
-                        authorizeRequests.anyRequest().authenticated()
+                        authorizeRequests.requestMatchers("/dinosaurs/**","/paddock/**").permitAll()
+                                .anyRequest().authenticated()
                 )
                 .formLogin(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults());
@@ -38,5 +39,3 @@ public class LoginConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
- */
