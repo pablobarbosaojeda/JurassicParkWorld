@@ -15,7 +15,7 @@ public class LifeCycleService {
     DinosaurRepository dinosaurRepository;
 
     // Lógica del ciclo de vida
-    @Scheduled(fixedRate = 60000) // Ejecuta cada 5 segundos
+    @Scheduled(fixedRate = 60000) // Ejecuta cada 60 segundos
     public void simulateLifeCycle() {
         List<Dinosaur> dinosaurs = dinosaurRepository.findAll();
 

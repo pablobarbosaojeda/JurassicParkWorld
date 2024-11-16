@@ -6,6 +6,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 @RepositoryRestResource(excerptProjection = EmbedDinosaurs.class)
+public interface DinosaurRepository extends JpaRepository<Dinosaur, Long> {
 
- public interface DinosaurRepository extends JpaRepository<Dinosaur, Long> {
+ /**
+  * Comprueba si existe un dinosaurio con el nombre especificado.
+  */
+ boolean existsByName(String name);
 }
