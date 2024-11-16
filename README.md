@@ -5,6 +5,8 @@ Este proyecto es un sistema de gestión del parque temático Jurassic Park, dise
 # URL backend repository:https://github.com/pablobarbosaojeda/JurassicParkWorld.git
 # URL frotend repository: https://github.com/pablobarbosaojeda/juurassic-frontend.git
 
+
+# Username: Admin  Password: 1234
 ## Funcionalidades del Proyecto
 
 1. **Gestión de Dinosaurios**:
