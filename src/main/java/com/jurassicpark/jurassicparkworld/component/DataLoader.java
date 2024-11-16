@@ -13,6 +13,8 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class DataLoader implements ApplicationRunner {
 
@@ -46,9 +48,13 @@ public class DataLoader implements ApplicationRunner {
         Paddock paddock2 = new Paddock("Rainforest", "Herbivore", 4, "Abierto", 12, 12);
         Paddock paddockNublar = new Paddock("Nublar", "Mixed", 6, "Abierto", 15, 15);
 
+        // Crear una enfermería con capacidad ilimitada (especial)
+        Paddock infirmary = new Paddock("Infirmary", "Mixed", 100, "Abierto", 10, 10);
+
         paddockRepository.save(paddock1);
         paddockRepository.save(paddock2);
         paddockRepository.save(paddockNublar);
+        paddockRepository.save(infirmary);
 
         // Crear dinosaurios y asociarlos a los paddocks
         Dinosaur dinosaur1 = new Dinosaur("Georgina", "Cerasinops", 5, "Female", "Herbivore", paddock2);
@@ -67,5 +73,38 @@ public class DataLoader implements ApplicationRunner {
         paddock1.updateMatrix();
         paddock2.updateMatrix();
         paddockNublar.updateMatrix();
+
+        // Restaurar dinosaurios heridos al iniciar
+        restoreInfirmaryDinos(infirmary, List.of(paddock1, paddock2, paddockNublar));
+    }
+
+    /**
+     * Restaurar dinosaurios heridos desde la enfermería a los paddocks disponibles.
+     */
+    private void restoreInfirmaryDinos(Paddock infirmary, List<Paddock> paddocks) {
+        List<Dinosaur> injuredDinos = infirmary.getDinosaurs();
+
+        for (Dinosaur dino : injuredDinos) {
+            dino.setHealth(100); // Restaurar salud
+            dino.setPaddock(null); // Liberar de la enfermería temporalmente
+
+            // Reubicar al dinosaurio en un paddock disponible si no está en la incubadora
+            if (!dino.isInNursing()) {
+                for (Paddock paddock : paddocks) {
+                    if (paddock.getDinosaurs().size() < paddock.getCapacity()) {
+                        dino.setPaddock(paddock);
+                        paddock.getDinosaurs().add(dino);
+                        paddock.updateMatrix();
+                        break;
+                    }
+                }
+            }
+
+            dinosaurRepository.save(dino);
+        }
+
+        // Limpiar la enfermería
+        infirmary.getDinosaurs().clear();
+        paddockRepository.save(infirmary);
     }
 }

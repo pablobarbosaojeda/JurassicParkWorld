@@ -2,6 +2,7 @@ package com.jurassicpark.jurassicparkworld.services;
 
 import com.jurassicpark.jurassicparkworld.models.Dinosaur;
 import com.jurassicpark.jurassicparkworld.Repositories.DinosaurRepository;
+import com.jurassicpark.jurassicparkworld.services.InfirmaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,9 @@ public class LifeCycleService implements Runnable {
 
     @Autowired
     private DinosaurRepository dinosaurRepository;
+
+    @Autowired
+    private InfirmaryService infirmaryService; // Servicio de enfermería
 
     private final Random random = new Random();
 
@@ -32,7 +36,7 @@ public class LifeCycleService implements Runnable {
         while (running) {
             try {
                 simulateLifeCycle();
-                Thread.sleep(7000); // Intervalo entre ciclos (7 segundos)
+                Thread.sleep(10000); // Intervalo entre ciclos (7 segundos)
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 System.out.println("Life cycle simulation interrupted.");
@@ -53,17 +57,26 @@ public class LifeCycleService implements Runnable {
                 dinosaur.ageUp();
                 dinosaur.setHungerLevel(dinosaur.getHungerLevel() + 10);
 
-                // Verificar hambre extrema
+                // Verificar hambre extrema y enviar a la enfermería si es necesario
                 if (dinosaur.getHungerLevel() >= 100) {
                     dinosaur.die();
                     System.out.printf("%s has died of hunger.%n", dinosaur.getName());
                     continue; // Saltar interacciones para dinosaurios muertos
                 }
 
+                // Si la salud es baja (por debajo de un umbral), enviar a la enfermería
+                if (dinosaur.getHealth() <= 30) {
+                    infirmaryService.transferToInfirmary(dinosaur); // Llamada para transferir a la enfermería
+                    continue; // No hacer más interacciones si está en la enfermería
+                }
+
                 // Manejar interacciones entre dinosaurios
                 handleInteractions(dinosaur);
             }
         }
+
+        // Limpiar dinosaurios muertos de la base de datos
+        infirmaryService.removeDeadDinosaurs();
 
         // Guardar cambios en la base de datos
         dinosaurRepository.saveAll(dinosaurs);
@@ -95,6 +108,10 @@ public class LifeCycleService implements Runnable {
                 System.out.printf("%s has killed %s.%n", carnivore.getName(), herbivore.getName());
             } else {
                 System.out.printf("%s has injured %s.%n", carnivore.getName(), herbivore.getName());
+            }
+            // Si el herbívoro está herido, enviarlo a la enfermería
+            if (herbivore.getHealth() <= 30) {
+                infirmaryService.transferToInfirmary(herbivore);
             }
         }
     }

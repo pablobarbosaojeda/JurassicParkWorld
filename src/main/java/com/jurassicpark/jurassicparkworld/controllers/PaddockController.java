@@ -1,8 +1,10 @@
 package com.jurassicpark.jurassicparkworld.controllers;
 
 import com.jurassicpark.jurassicparkworld.Repositories.PaddockRepository;
+import com.jurassicpark.jurassicparkworld.Repositories.DinosaurRepository;
 import com.jurassicpark.jurassicparkworld.models.Paddock;
 import com.jurassicpark.jurassicparkworld.models.Dinosaur;
+import com.jurassicpark.jurassicparkworld.services.InfirmaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,12 @@ public class PaddockController {
 
     @Autowired
     PaddockRepository paddockRepository;
+
+    @Autowired
+    DinosaurRepository dinosaurRepository;
+
+    @Autowired
+    InfirmaryService infirmaryService; // Agregado para gestionar la enfermería
 
     // Obtener todos los paddocks
     @GetMapping
@@ -39,7 +47,6 @@ public class PaddockController {
     @GetMapping("/{id}/matrix")
     public ResponseEntity<?> getPaddockMatrix(@PathVariable Long id) {
         Optional<Paddock> paddock = paddockRepository.findById(id);
-
         if (paddock.isPresent()) {
             paddock.get().updateMatrix(); // Asegurarse de que la matriz esté actualizada
             return ResponseEntity.ok(paddock.get().getMatrix());
@@ -48,7 +55,7 @@ public class PaddockController {
         }
     }
 
-    // Mover un dinosaurio dentro de un paddock
+    // Mover un dinosaurio dentro de un paddock o transferirlo a la enfermería si está herido
     @PutMapping("/{paddockId}/dinosaurs/{dinosaurId}/move")
     public ResponseEntity<?> moveDinosaur(
             @PathVariable Long paddockId,
@@ -67,9 +74,17 @@ public class PaddockController {
 
             if (dinosaurOptional.isPresent()) {
                 Dinosaur dinosaur = dinosaurOptional.get();
-                paddock.moveDinosaur(dinosaur, newX, newY);
-                paddockRepository.save(paddock); // Guardar cambios
-                return ResponseEntity.ok("Dinosaur moved successfully.");
+
+                // Si el dinosaurio está herido (salud < 50), lo trasladamos a la enfermería
+                if (dinosaur.getHealth() < 50) {
+                    infirmaryService.transferToInfirmary(dinosaur);
+                    return ResponseEntity.ok("Dinosaur has been transferred to the infirmary.");
+                } else {
+                    // Si el dinosaurio no está herido, moverlo dentro del paddock
+                    paddock.moveDinosaur(dinosaur, newX, newY);
+                    paddockRepository.save(paddock); // Guardar cambios
+                    return ResponseEntity.ok("Dinosaur moved successfully.");
+                }
             } else {
                 return ResponseEntity.badRequest().body("Dinosaur not found in this paddock.");
             }

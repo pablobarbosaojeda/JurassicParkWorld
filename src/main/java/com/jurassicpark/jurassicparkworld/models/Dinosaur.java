@@ -54,10 +54,19 @@ public class Dinosaur {
     @Column(name = "pos_y", nullable = false)
     private int posY; // Posición Y dentro del paddock
 
+    @Column(name = "in_nursing", nullable = false)
+    private boolean inNursing = false; // Indica si está en la enfermería
+
     @JsonIgnoreProperties("dinosaurs")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pad_id")
     private Paddock paddock;
+
+    // NUEVO: Relación con la enfermería
+    @JsonIgnoreProperties("dinosaurs")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "infirmary_id")
+    private Infirmary infirmary;
 
     // Constructor principal
     public Dinosaur(String name, String species, int belly, String gender, String type, Paddock paddock) {
@@ -115,6 +124,23 @@ public class Dinosaur {
         } else if (this.health < 50) {
             System.out.printf("%s is injured with %d health remaining.%n", this.name, this.health);
         }
+    }
+
+    // NUEVO: Enviar a la enfermería
+    public void setInfirmary(Infirmary infirmary) {
+        this.infirmary = infirmary;
+        this.inNursing = true;
+        this.paddock = null; // Eliminar del paddock actual
+        System.out.printf("%s has been moved to the infirmary.%n", this.name);
+    }
+
+    // NUEVO: Curar dinosaurio
+    public void heal(Paddock newPaddock) {
+        this.health = 100; // Restaurar salud
+        this.inNursing = false; // Marcar como fuera de la enfermería
+        this.infirmary = null; // Eliminar la referencia a la enfermería
+        this.setPaddock(newPaddock); // Asignar a un nuevo paddock
+        System.out.printf("%s has been healed and moved to paddock %s.%n", this.name, newPaddock.getName());
     }
 
     // Métodos de movimiento
@@ -257,6 +283,18 @@ public class Dinosaur {
         if (paddock != null) {
             paddock.getDinosaurs().add(this);
         }
+    }
+
+    public Infirmary getInfirmary() {
+        return infirmary;
+    }
+
+    public boolean isInNursing() {
+        return inNursing;
+    }
+
+    public void setInNursing(boolean inNursing) {
+        this.inNursing = inNursing;
     }
 
     // Método para obtener URL de la imagen

@@ -61,7 +61,8 @@ public class IncubatorService {
         boolean assigned = false;
 
         for (Paddock paddock : paddocks) {
-            if (isPaddockSuitable(paddock, type)) {
+            // Asegúrate de que el paddock no sea de tipo "Enfermería" y tenga espacio
+            if (isPaddockSuitable(paddock, type) && !paddock.getName().equalsIgnoreCase("Infirmary")) {
                 paddock.getDinosaurs().add(newDinosaur);
                 newDinosaur.setPaddock(paddock);
                 dinosaurRepository.save(newDinosaur);
