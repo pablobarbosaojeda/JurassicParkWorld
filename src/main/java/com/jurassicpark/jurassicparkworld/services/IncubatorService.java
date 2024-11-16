@@ -32,8 +32,15 @@ public class IncubatorService {
                 .distinct()
                 .collect(Collectors.toList());
 
-        if (existingSpecies.isEmpty()) {
-            System.out.println("No species available to generate dinosaurs.");
+        // Obtener paddocks disponibles
+        List<Paddock> paddocks = paddockRepository.findAll();
+
+        // Comprobar si hay espacio en los paddocks
+        boolean hasAvailableSpace = paddocks.stream()
+                .anyMatch(paddock -> paddock.getDinosaurs().size() < paddock.getCapacity());
+
+        if (existingSpecies.isEmpty() || !hasAvailableSpace) {
+            System.out.println("No available paddocks for the new dinosaur. Incubator is waiting.");
             return;
         }
 
@@ -51,7 +58,6 @@ public class IncubatorService {
         newDinosaur.setAge(1); // Siempre comienzan con 1 año
 
         // Buscar un paddock adecuado para el dinosaurio
-        List<Paddock> paddocks = paddockRepository.findAll();
         boolean assigned = false;
 
         for (Paddock paddock : paddocks) {
