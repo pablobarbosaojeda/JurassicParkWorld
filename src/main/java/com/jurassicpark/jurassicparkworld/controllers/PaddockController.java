@@ -2,6 +2,7 @@ package com.jurassicpark.jurassicparkworld.controllers;
 
 import com.jurassicpark.jurassicparkworld.Repositories.PaddockRepository;
 import com.jurassicpark.jurassicparkworld.models.Paddock;
+import com.jurassicpark.jurassicparkworld.models.Dinosaur;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,14 +35,47 @@ public class PaddockController {
         }
     }
 
-    // Crear un nuevo paddock
-    @PostMapping
-    public ResponseEntity<?> createPaddock(@RequestBody Paddock paddock) {
-        if (paddock.getCapacity() <= 0) {
-            return ResponseEntity.badRequest().body("Capacity must be greater than zero.");
+    // Obtener la matriz de un paddock
+    @GetMapping("/{id}/matrix")
+    public ResponseEntity<?> getPaddockMatrix(@PathVariable Long id) {
+        Optional<Paddock> paddock = paddockRepository.findById(id);
+
+        if (paddock.isPresent()) {
+            paddock.get().updateMatrix(); // Asegurarse de que la matriz esté actualizada
+            return ResponseEntity.ok(paddock.get().getMatrix());
+        } else {
+            return ResponseEntity.notFound().build();
         }
-        Paddock savedPaddock = paddockRepository.save(paddock);
-        return ResponseEntity.ok(savedPaddock);
+    }
+
+    // Mover un dinosaurio dentro de un paddock
+    @PutMapping("/{paddockId}/dinosaurs/{dinosaurId}/move")
+    public ResponseEntity<?> moveDinosaur(
+            @PathVariable Long paddockId,
+            @PathVariable Long dinosaurId,
+            @RequestParam int newX,
+            @RequestParam int newY) {
+
+        Optional<Paddock> paddockOptional = paddockRepository.findById(paddockId);
+
+        if (paddockOptional.isPresent()) {
+            Paddock paddock = paddockOptional.get();
+            Optional<Dinosaur> dinosaurOptional = paddock.getDinosaurs()
+                    .stream()
+                    .filter(d -> d.getId().equals(dinosaurId))
+                    .findFirst();
+
+            if (dinosaurOptional.isPresent()) {
+                Dinosaur dinosaur = dinosaurOptional.get();
+                paddock.moveDinosaur(dinosaur, newX, newY);
+                paddockRepository.save(paddock); // Guardar cambios
+                return ResponseEntity.ok("Dinosaur moved successfully.");
+            } else {
+                return ResponseEntity.badRequest().body("Dinosaur not found in this paddock.");
+            }
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     // Actualizar un paddock existente
@@ -55,6 +89,8 @@ public class PaddockController {
             paddock.setType(updatedPaddock.getType());
             paddock.setCapacity(updatedPaddock.getCapacity());
             paddock.setDinosaurs(updatedPaddock.getDinosaurs());
+            paddock.setRows(updatedPaddock.getRows());
+            paddock.setCols(updatedPaddock.getCols());
             paddockRepository.save(paddock);
             return ResponseEntity.ok(paddock);
         } else {

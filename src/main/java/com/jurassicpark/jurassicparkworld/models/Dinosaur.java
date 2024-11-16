@@ -3,6 +3,7 @@ package com.jurassicpark.jurassicparkworld.models;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.HashMap;
+
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "dinosaurs")
@@ -29,10 +30,22 @@ public class Dinosaur {
     private int age;
 
     @Column(name = "type")
-    private String type;
+    private String type; // "Carnivore", "Herbivore", etc.
 
     @Column(name = "img")
     private String img;
+
+    @Column(name = "health", nullable = false)
+    private String health = "Sano"; // Valor predeterminado
+
+    @Column(name = "hunger_level", nullable = false)
+    private int hungerLevel = 0; // Valor predeterminado
+
+    @Column(name = "pos_x", nullable = false)
+    private int posX; // Posición X del dinosaurio dentro del paddock
+
+    @Column(name = "pos_y", nullable = false)
+    private int posY; // Posición Y del dinosaurio dentro del paddock
 
     @JsonIgnoreProperties("dinosaurs")
     @ManyToOne(fetch = FetchType.LAZY)
@@ -49,13 +62,71 @@ public class Dinosaur {
         this.type = type;
         this.paddock = paddock;
         this.img = getImgUrl(species);
+        this.health = "Sano"; // Valor predeterminado
+        this.hungerLevel = 0; // Valor predeterminado
+        this.posX = 0; // Posición inicial por defecto
+        this.posY = 0; // Posición inicial por defecto
     }
 
     // Constructor vacío
     public Dinosaur() {
+        this.health = "Sano"; // Asegura que health nunca sea null
+        this.hungerLevel = 0; // Inicialización predeterminada
+        this.posX = 0; // Posición inicial por defecto
+        this.posY = 0; // Posición inicial por defecto
     }
 
-    // Getters y Setters
+    // Métodos nuevos para manejar posición
+    public void moveTo(int newX, int newY) {
+        this.posX = newX;
+        this.posY = newY;
+    }
+
+    // Métodos nuevos para obtener la posición
+    public int getPosX() {
+        return posX;
+    }
+
+    public void setPosX(int posX) {
+        this.posX = posX;
+    }
+
+    public int getPosY() {
+        return posY;
+    }
+
+    public void setPosY(int posY) {
+        this.posY = posY;
+    }
+
+    // Métodos existentes
+    public void ageUp() {
+        this.age++;
+    }
+
+    public void feed() {
+        this.hungerLevel = 0;
+    }
+
+    public void injure() {
+        if (this.health != null && this.health.equals("Sano")) {
+            this.health = "Herido";
+        }
+    }
+
+    public void die() {
+        this.health = "Muerto";
+    }
+
+    public boolean isAlive() {
+        return this.health != null && !this.health.equals("Muerto");
+    }
+
+    public boolean isCarnivore() {
+        return this.type != null && this.type.equalsIgnoreCase("Carnivore");
+    }
+
+    // Getters y Setters existentes
     public Long getId() {
         return id;
     }
@@ -115,6 +186,26 @@ public class Dinosaur {
 
     public String getImg() {
         return img;
+    }
+
+    public void setImg(String img) {
+        this.img = img;
+    }
+
+    public String getHealth() {
+        return health;
+    }
+
+    public void setHealth(String health) {
+        this.health = health;
+    }
+
+    public int getHungerLevel() {
+        return hungerLevel;
+    }
+
+    public void setHungerLevel(int hungerLevel) {
+        this.hungerLevel = hungerLevel;
     }
 
     public Paddock getPaddock() {
