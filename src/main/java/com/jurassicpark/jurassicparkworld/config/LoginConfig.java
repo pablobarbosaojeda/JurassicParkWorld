@@ -1,3 +1,4 @@
+/*
 package com.jurassicpark.jurassicparkworld.config;
 
 import org.springframework.context.annotation.Bean;
@@ -37,3 +38,5 @@ public class LoginConfig {
         return new BCryptPasswordEncoder();
     }
 }
+
+ */
