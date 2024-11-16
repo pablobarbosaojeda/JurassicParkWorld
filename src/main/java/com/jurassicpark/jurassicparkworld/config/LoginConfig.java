@@ -28,6 +28,7 @@ public class LoginConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // Se crea una sesión si es necesario.
                         .invalidSessionUrl("/login") // Redirige a login si la sesión es inválida
                 );
+
         return http.build();
     }
     @Bean
