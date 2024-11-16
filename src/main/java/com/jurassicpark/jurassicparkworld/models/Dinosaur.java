@@ -3,6 +3,7 @@ package com.jurassicpark.jurassicparkworld.models;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.HashMap;
+import java.util.Random;
 
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
@@ -36,16 +37,22 @@ public class Dinosaur {
     private String img;
 
     @Column(name = "health", nullable = false)
-    private String health = "Sano"; // Valor predeterminado
+    private int health = 100; // Salud inicial predeterminada
 
     @Column(name = "hunger_level", nullable = false)
-    private int hungerLevel = 0; // Valor predeterminado
+    private int hungerLevel = 0; // Nivel de hambre inicial
+
+    @Column(name = "strength", nullable = false)
+    private int strength = 50; // Fuerza inicial
+
+    @Column(name = "alive", nullable = false)
+    private boolean alive = true; // Estado de vida del dinosaurio
 
     @Column(name = "pos_x", nullable = false)
-    private int posX; // Posición X del dinosaurio dentro del paddock
+    private int posX; // Posición X dentro del paddock
 
     @Column(name = "pos_y", nullable = false)
-    private int posY; // Posición Y del dinosaurio dentro del paddock
+    private int posY; // Posición Y dentro del paddock
 
     @JsonIgnoreProperties("dinosaurs")
     @ManyToOne(fetch = FetchType.LAZY)
@@ -62,71 +69,77 @@ public class Dinosaur {
         this.type = type;
         this.paddock = paddock;
         this.img = getImgUrl(species);
-        this.health = "Sano"; // Valor predeterminado
-        this.hungerLevel = 0; // Valor predeterminado
-        this.posX = 0; // Posición inicial por defecto
-        this.posY = 0; // Posición inicial por defecto
+        this.health = 100;
+        this.hungerLevel = 0;
+        this.strength = 50;
+        this.posX = 0;
+        this.posY = 0;
+        this.alive = true;
     }
 
     // Constructor vacío
     public Dinosaur() {
-        this.health = "Sano"; // Asegura que health nunca sea null
-        this.hungerLevel = 0; // Inicialización predeterminada
-        this.posX = 0; // Posición inicial por defecto
-        this.posY = 0; // Posición inicial por defecto
+        this.health = 100;
+        this.hungerLevel = 0;
+        this.strength = 50;
+        this.posX = 0;
+        this.posY = 0;
+        this.alive = true;
     }
 
-    // Métodos nuevos para manejar posición
+    // Métodos de combate
+    public boolean isAlive() {
+        return this.alive;
+    }
+
+    public void die() {
+        this.alive = false;
+        this.health = 0;
+        System.out.printf("%s has died.%n", this.name);
+    }
+
+    public void attack(Dinosaur target) {
+        if (!this.isAlive() || !target.isAlive()) {
+            return; // No atacar si alguno está muerto
+        }
+        Random random = new Random();
+        int damage = random.nextInt(this.strength); // Generar daño basado en fuerza
+        target.takeDamage(damage);
+        System.out.printf("%s attacked %s and dealt %d damage.%n", this.name, target.getName(), damage);
+    }
+
+    public void takeDamage(int damage) {
+        this.health -= damage;
+        if (this.health <= 0) {
+            this.die();
+        } else if (this.health < 50) {
+            System.out.printf("%s is injured with %d health remaining.%n", this.name, this.health);
+        }
+    }
+
+    // Métodos de movimiento
     public void moveTo(int newX, int newY) {
         this.posX = newX;
         this.posY = newY;
     }
 
-    // Métodos nuevos para obtener la posición
-    public int getPosX() {
-        return posX;
-    }
-
-    public void setPosX(int posX) {
-        this.posX = posX;
-    }
-
-    public int getPosY() {
-        return posY;
-    }
-
-    public void setPosY(int posY) {
-        this.posY = posY;
-    }
-
-    // Métodos existentes
+    // Métodos de envejecimiento y alimentación
     public void ageUp() {
         this.age++;
+        this.strength = Math.max(0, this.strength + 2); // Incrementar fuerza con la edad
     }
 
     public void feed() {
         this.hungerLevel = 0;
+        System.out.printf("%s has been fed and is no longer hungry.%n", this.name);
     }
 
-    public void injure() {
-        if (this.health != null && this.health.equals("Sano")) {
-            this.health = "Herido";
-        }
-    }
-
-    public void die() {
-        this.health = "Muerto";
-    }
-
-    public boolean isAlive() {
-        return this.health != null && !this.health.equals("Muerto");
-    }
-
+    // Métodos adicionales para determinar el tipo de dinosaurio
     public boolean isCarnivore() {
         return this.type != null && this.type.equalsIgnoreCase("Carnivore");
     }
 
-    // Getters y Setters existentes
+    // Getters y Setters
     public Long getId() {
         return id;
     }
@@ -192,11 +205,11 @@ public class Dinosaur {
         this.img = img;
     }
 
-    public String getHealth() {
+    public int getHealth() {
         return health;
     }
 
-    public void setHealth(String health) {
+    public void setHealth(int health) {
         this.health = health;
     }
 
@@ -208,12 +221,35 @@ public class Dinosaur {
         this.hungerLevel = hungerLevel;
     }
 
+    public int getStrength() {
+        return strength;
+    }
+
+    public void setStrength(int strength) {
+        this.strength = strength;
+    }
+
+    public int getPosX() {
+        return posX;
+    }
+
+    public void setPosX(int posX) {
+        this.posX = posX;
+    }
+
+    public int getPosY() {
+        return posY;
+    }
+
+    public void setPosY(int posY) {
+        this.posY = posY;
+    }
+
     public Paddock getPaddock() {
         return paddock;
     }
 
     public void setPaddock(Paddock paddock) {
-        // Sincronización bidireccional para evitar pérdida de datos
         if (this.paddock != null) {
             this.paddock.getDinosaurs().remove(this);
         }

@@ -57,6 +57,8 @@ public class DinosaurController {
             dinosaur.setType(updatedDinosaur.getType());
             dinosaur.setGender(updatedDinosaur.getGender());
             dinosaur.setAge(updatedDinosaur.getAge());
+            dinosaur.setHealth(updatedDinosaur.getHealth());
+            dinosaur.setHungerLevel(updatedDinosaur.getHungerLevel());
             Dinosaur savedDinosaur = dinosaurRepository.save(dinosaur);
             return ResponseEntity.ok(savedDinosaur);
         } else {
@@ -65,13 +67,21 @@ public class DinosaurController {
     }
 
     /**
-     * Eliminar un dinosaurio
+     * Alimentar a un dinosaurio
      */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDinosaur(@PathVariable Long id) {
-        if (dinosaurRepository.existsById(id)) {
-            dinosaurRepository.deleteById(id);
-            return ResponseEntity.ok().build();
+    @PatchMapping("/{id}/feed")
+    public ResponseEntity<Dinosaur> feedDinosaur(@PathVariable Long id) {
+        Optional<Dinosaur> dinosaur = dinosaurRepository.findById(id);
+
+        if (dinosaur.isPresent()) {
+            Dinosaur dino = dinosaur.get();
+            if (dino.isAlive()) {
+                dino.feed();
+                Dinosaur savedDino = dinosaurRepository.save(dino);
+                return ResponseEntity.ok(savedDino);
+            } else {
+                return ResponseEntity.status(400).build(); // No se puede alimentar un dinosaurio muerto
+            }
         } else {
             return ResponseEntity.notFound().build();
         }

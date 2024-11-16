@@ -3,49 +3,118 @@ package com.jurassicpark.jurassicparkworld.services;
 import com.jurassicpark.jurassicparkworld.models.Dinosaur;
 import com.jurassicpark.jurassicparkworld.Repositories.DinosaurRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.util.List;
+import java.util.Random;
 
 @Service
-public class LifeCycleService {
+public class LifeCycleService implements Runnable {
 
     @Autowired
-    DinosaurRepository dinosaurRepository;
+    private DinosaurRepository dinosaurRepository;
 
-    // Lógica del ciclo de vida
-    @Scheduled(fixedRate = 60000) // Ejecuta cada 60 segundos
-    public void simulateLifeCycle() {
+    private final Random random = new Random();
+
+    private volatile boolean running = true; // Control del ciclo de vida
+
+    @PostConstruct
+    public void init() {
+        Thread lifeCycleThread = new Thread(this);
+        lifeCycleThread.setDaemon(true); // Hilo de fondo
+        lifeCycleThread.start();
+    }
+
+    @Override
+    public void run() {
+        System.out.println("Starting life cycle simulation...");
+        while (running) {
+            try {
+                simulateLifeCycle();
+                Thread.sleep(7000); // Intervalo entre ciclos (7 segundos)
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println("Life cycle simulation interrupted.");
+            }
+        }
+    }
+
+    public void stop() {
+        running = false;
+    }
+
+    private void simulateLifeCycle() {
         List<Dinosaur> dinosaurs = dinosaurRepository.findAll();
 
         for (Dinosaur dinosaur : dinosaurs) {
             if (dinosaur.isAlive()) {
+                // Envejecer y aumentar el hambre
                 dinosaur.ageUp();
                 dinosaur.setHungerLevel(dinosaur.getHungerLevel() + 10);
 
-                // Simula interacciones entre dinosaurios
-                handleInteractions(dinosaur);
-
-                // Comprueba si el dinosaurio muere de hambre
+                // Verificar hambre extrema
                 if (dinosaur.getHungerLevel() >= 100) {
                     dinosaur.die();
+                    System.out.printf("%s has died of hunger.%n", dinosaur.getName());
+                    continue; // Saltar interacciones para dinosaurios muertos
                 }
+
+                // Manejar interacciones entre dinosaurios
+                handleInteractions(dinosaur);
             }
         }
 
+        // Guardar cambios en la base de datos
         dinosaurRepository.saveAll(dinosaurs);
+        System.out.println("Cycle completed. Waiting for next interval...");
     }
 
     private void handleInteractions(Dinosaur dinosaur) {
         List<Dinosaur> paddockDinosaurs = dinosaur.getPaddock().getDinosaurs();
 
         for (Dinosaur other : paddockDinosaurs) {
-            if (!dinosaur.equals(other)) {
-                if (dinosaur.isCarnivore() && !other.isCarnivore() && Math.random() > 0.5) {
-                    other.injure(); // 50% de probabilidad de herir a un herbívoro
-                } else if (dinosaur.isCarnivore() == other.isCarnivore() && Math.random() > 0.8) {
-                    dinosaur.injure(); // Competencia entre carnívoros
+            if (dinosaur.equals(other) || dinosaur.getName().equals(other.getName()) || !other.isAlive()) {
+                continue; // Evitar interacción consigo mismo o con dinosaurios muertos
+            }
+
+            if (dinosaur.isCarnivore() && !other.isCarnivore()) {
+                handleCarnivoreAttack(dinosaur, other);
+            } else if (dinosaur.isCarnivore() && other.isCarnivore()) {
+                handleCarnivoreCompetition(dinosaur, other);
+            } else if (!dinosaur.isCarnivore() && random.nextDouble() > 0.9) {
+                System.out.printf("%s interacts peacefully with %s.%n", dinosaur.getName(), other.getName());
+            }
+        }
+    }
+
+    private void handleCarnivoreAttack(Dinosaur carnivore, Dinosaur herbivore) {
+        if (random.nextDouble() > 0.5) {
+            carnivore.attack(herbivore);
+            if (!herbivore.isAlive()) {
+                System.out.printf("%s has killed %s.%n", carnivore.getName(), herbivore.getName());
+            } else {
+                System.out.printf("%s has injured %s.%n", carnivore.getName(), herbivore.getName());
+            }
+        }
+    }
+
+    private void handleCarnivoreCompetition(Dinosaur carnivore1, Dinosaur carnivore2) {
+        if (random.nextDouble() > 0.5) {
+            System.out.printf("Competition between %s and %s.%n", carnivore1.getName(), carnivore2.getName());
+            if (random.nextDouble() > 0.5) {
+                carnivore1.attack(carnivore2);
+                if (!carnivore2.isAlive()) {
+                    System.out.printf("%s has killed %s in competition.%n", carnivore1.getName(), carnivore2.getName());
+                } else {
+                    System.out.printf("%s injured %s in competition.%n", carnivore1.getName(), carnivore2.getName());
+                }
+            } else {
+                carnivore2.attack(carnivore1);
+                if (!carnivore1.isAlive()) {
+                    System.out.printf("%s has killed %s in competition.%n", carnivore2.getName(), carnivore1.getName());
+                } else {
+                    System.out.printf("%s injured %s in competition.%n", carnivore2.getName(), carnivore1.getName());
                 }
             }
         }

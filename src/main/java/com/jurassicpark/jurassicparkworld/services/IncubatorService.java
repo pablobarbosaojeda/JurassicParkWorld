@@ -37,9 +37,9 @@ public class IncubatorService {
             return;
         }
 
-        // Generar atributos aleatorios basados en especies existentes
+        // Seleccionar especie y tipo de forma aleatoria
         String species = existingSpecies.get(random.nextInt(existingSpecies.size()));
-        String type = getTypeBySpecies(species); // Determinar el tipo basado en la especie
+        String type = random.nextBoolean() ? "Carnivore" : "Herbivore"; // Aleatoriamente carnívoro o herbívoro
         String gender = random.nextBoolean() ? "Male" : "Female";
         String name = generateUniqueDinosaurName();
 
@@ -60,8 +60,8 @@ public class IncubatorService {
                 newDinosaur.setPaddock(paddock);
                 dinosaurRepository.save(newDinosaur);
                 paddockRepository.save(paddock);
-                System.out.printf("New dinosaur %s (%s) added to paddock %s.%n",
-                        name, type, paddock.getName());
+                System.out.printf("New dinosaur %s (%s, %s) added to paddock %s.%n",
+                        name, species, type, paddock.getName());
                 assigned = true;
                 break;
             }
@@ -69,19 +69,6 @@ public class IncubatorService {
 
         if (!assigned) {
             System.out.println("No available paddocks for the new dinosaur. Incubator is waiting.");
-        }
-    }
-
-    /**
-     * Determina el tipo de dinosaurio basado en su especie.
-     */
-    private String getTypeBySpecies(String species) {
-        // Consulta o lógica para determinar el tipo por especie (personalizar según tu modelo)
-        // Ejemplo de lógica fija
-        if (species.equalsIgnoreCase("Tyrannosaurus") || species.equalsIgnoreCase("Velociraptor")) {
-            return "Carnivore";
-        } else {
-            return "Herbivore";
         }
     }
 

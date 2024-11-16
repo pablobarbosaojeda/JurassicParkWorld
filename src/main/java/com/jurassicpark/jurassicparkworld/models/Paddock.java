@@ -123,7 +123,7 @@ public class Paddock {
             if (dino.isCarnivore()) {
                 this.hazardLevel += 2; // Aumenta el nivel de peligro por carnívoros
             }
-            if (dino.getHealth().equals("Herido")) {
+            if (dino.getHealth() < 50) {
                 this.hazardLevel += 1; // Heridos aumentan ligeramente el peligro
             }
         }
