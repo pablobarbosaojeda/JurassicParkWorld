@@ -1,6 +1,5 @@
 package com.jurassicpark.jurassicparkworld.services;
 
-
 import com.jurassicpark.jurassicparkworld.models.Dinosaur;
 import com.jurassicpark.jurassicparkworld.models.Paddock;
 import com.jurassicpark.jurassicparkworld.Repositories.PaddockRepository;
@@ -21,15 +20,16 @@ public class MovementService {
     public void simulateMovementForAllPaddocks() {
         List<Paddock> paddocks = paddockRepository.findAll(); // Obtener todos los paddocks
         for (Paddock paddock : paddocks) {
-            simulateMovement(paddock);
-            paddockRepository.save(paddock); // Guardar los cambios en la base de datos
+            if (paddock != null && paddock.getDinosaurs() != null) {
+                simulateMovement(paddock);
+                paddockRepository.save(paddock); // Guardar los cambios en la base de datos
+            }
         }
     }
 
     private void simulateMovement(Paddock paddock) {
-        if (paddock == null || paddock.getMatrix() == null || paddock.getDinosaurs() == null) {
-            return; // Validación para evitar errores
-        }
+        int rows = 10; // Tamaño fijo de la matriz en el frontend
+        int cols = 10;
 
         for (Dinosaur dinosaur : paddock.getDinosaurs()) {
             if (dinosaur.isAlive()) { // Mover solo dinosaurios vivos
@@ -37,17 +37,22 @@ public class MovementService {
                 int currentY = dinosaur.getPosY();
 
                 // Generar nuevas posiciones aleatorias dentro de los límites
-                int newX = Math.max(0, Math.min(currentX + random.nextInt(3) - 1, paddock.getRows() - 1));
-                int newY = Math.max(0, Math.min(currentY + random.nextInt(3) - 1, paddock.getCols() - 1));
+                int newX = generateNewPosition(currentX, rows);
+                int newY = generateNewPosition(currentY, cols);
 
-                // Si la nueva posición es diferente, actualiza
+                // Validar y actualizar posición solo si es diferente
                 if (newX != currentX || newY != currentY) {
-                    paddock.getMatrix()[currentX][currentY] = null; // Limpia la posición anterior
+                    System.out.printf("Dinosaur %s moved from (%d, %d) to (%d, %d)%n",
+                            dinosaur.getName(), currentX, currentY, newX, newY);
                     dinosaur.setPosX(newX);
                     dinosaur.setPosY(newY);
-                    paddock.getMatrix()[newX][newY] = "D"; // Marca la nueva posición
                 }
             }
         }
+    }
+
+    private int generateNewPosition(int current, int maxLimit) {
+        // Genera un nuevo valor aleatorio dentro del rango permitido
+        return Math.max(0, Math.min(current + random.nextInt(3) - 1, maxLimit - 1));
     }
 }
